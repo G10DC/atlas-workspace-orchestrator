@@ -1,0 +1,10 @@
+{
+  "name": "atlas",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Multi-repository and monorepo workspace dependency orchestrator.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/**/*.test.js"
+  }
+}
