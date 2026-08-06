@@ -43,9 +43,19 @@ node src/atlas.js --find-dependents "@myorg/shared-auth" --workspace-root "/User
 
 ---
 
-## ⚡ Spark Breakthrough Enhancement
+## Spark Breakthrough Enhancement
 
 - **Feature**: **Cross-Repo Impact Radius Heatmap**
 - **Description**: Visualizes how a pull request in Repo A impacts dependent symbols across Monorepo B & C.
 - **Synergy**: Integrated with `cartographer` (Mermaid maps) & `smith` (AST refactoring).
 - **Framework**: Applied via the `spark` 4-Lens Lateral Ideation Engine.
+
+
+## When to use
+
+- Primary domain workflow execution as specified in frontmatter description.
+
+
+## When NOT to use
+
+- Tasks outside declared skill scope or handled by specialized sibling skills.
