@@ -1,6 +1,12 @@
 ---
 name: atlas
-description: Multi-repository and monorepo workspace orchestrator. Extends dependency analysis and symbol reachability maps across multiple repositories, submodules, and monorepo packages. Inspired by Repowise, Greptile, and CodeQL MRVA.
+description: >-
+  Multi-repository and monorepo workspace orchestrator. Extends dependency
+  analysis and symbol reachability maps across multiple repositories,
+  submodules, and monorepo packages by consuming trellis output at workspace
+  scale. Use when a change spans multiple repos and you need cross-repo impact
+  analysis. Never rebuild the dependency graph -- consume trellis index; never
+  use for single-repo analysis -- use trellis directly.
 ---
 
 # Atlas
