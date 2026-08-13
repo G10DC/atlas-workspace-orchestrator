@@ -1,61 +1,51 @@
 ---
 name: atlas
+status: implemented
 description: >-
-  Multi-repository and monorepo workspace orchestrator. Extends dependency
-  analysis and symbol reachability maps across multiple repositories,
-  submodules, and monorepo packages by consuming trellis output at workspace
-  scale. Use when a change spans multiple repos and you need cross-repo impact
-  analysis. Never rebuild the dependency graph -- consume trellis index; never
-  use for single-repo analysis -- use trellis directly.
+  Recursive package.json scanner for one directory tree: builds a same-workspace
+  dependency graph from declared dependency names, and does reverse-DFS to find
+  a package's dependents. Use for "what depends on this package" within one
+  already-cloned workspace. Never rebuild the graph expecting trellis output --
+  this builds its own; never use across repos you haven't already cloned --
+  there is no multi-repo or git-remote awareness.
 ---
 
 # Atlas
 
-Multi-Repository & Monorepo Workspace Orchestrator. Atlas coordinates codebase analysis, symbol tracking, and change propagation across complex workspaces containing multiple Git repositories, workspace packages, and shared libraries.
+**Single-workspace package dependency mapper.** Recursively finds every `package.json` under one root, builds a graph from declared dependency names that match other packages in the scan, and answers "what depends on X" via reverse DFS. Real, working code for a monorepo you already have checked out locally.
 
-## Golden Rules
-1. **Analyze workspace-wide**: Never assume codebase changes are isolated to a single repository. Query multi-repo workspace paths.
-2. **Propagate breaking changes**: When a library API is modified, Atlas must trace dependency graphs across all consuming repositories in the workspace and flag downstream breakages.
-3. **Isolate workspaces**: Run multi-repo edits in clean git worktrees or branches to prevent mixing changes and ensure clean PR submission paths.
-4. **Cache dependency indexes**: Map and index package configurations (`package.json`, `go.mod`, `Cargo.toml`) globally to speed up symbol searches across big mono/multi-repositories.
+## What it actually does
+- `findWorkspacePackages(rootDir)` walks the tree (skipping `node_modules`/dot-dirs), reads every
+  `package.json`, records `{ name, path, dependencies }`.
+- `buildDependencyGraph(packages)` builds an adjacency list from name matches against
+  `dependencies`/`devDependencies` within the same scan.
+- `findDependents(targetName, graph)` reverse-DFS to find every package that depends on it,
+  directly or transitively.
 
-## Cross-Repo Dependency Tracking
-```mermaid
-graph TD
-    A[Modifying Shared Library A] --> B[Atlas: Scan Workspace Monorepos]
-    B --> C[Query package.json / cargo.toml dependencies]
-    C --> D[Identify downstream consumer Repos B & C]
-    D --> E[Map import statements & symbol usages]
-    E --> F[Generate smith codemod targets for Repos B & C]
+## What it does not do (despite "multi-repository orchestrator")
+- **No cross-repo support.** Repos not already cloned into the scanned tree are invisible — no
+  git-remote awareness, no fetching.
+- **No `trellis` consumption.** Builds its own graph from `package.json` names; doesn't read
+  `.ast-cache.json` or any `trellis` output.
+- **No symbol/import tracking.** Package-name-to-package-name only, from manifest declarations.
+- **Only `package.json` is parsed** — `go.mod`/`Cargo.toml` are not, despite earlier docs.
+
+## Usage (library, not a CLI)
+
+```js
+import { findWorkspacePackages, buildDependencyGraph, findDependents } from './lib/atlas.js';
+
+const packages = findWorkspacePackages('/path/to/workspace/root');
+const graph = buildDependencyGraph(packages);
+const dependents = findDependents('@myorg/shared-auth', graph);
 ```
-
-## Implementation Frameworks & Tooling
-* **Dependency Mapping**: Inspired by `Repowise`, create semantic indexes of package-level dependency relationships and workspace layouts.
-* **Semantic Code Search**: Map codebase files using AST symbol extractors or integrate with `Greptile` APIs to perform semantic queries across multiple repositories.
-* **Workspace Analysis**: Leverage static analysis engines similar to GitHub CodeQL MRVA (Multi-Repository Variant Analysis) to scan patterns across many directories.
-
-## Usage Guide
-Scan workspace directories to locate all consuming projects of a specific module:
-```bash
-node src/atlas.js --find-dependents "@myorg/shared-auth" --workspace-root "/Users/user/projects"
-```
-
-
----
-
-## Spark Breakthrough Enhancement
-
-- **Feature**: **Cross-Repo Impact Radius Heatmap**
-- **Description**: Visualizes how a pull request in Repo A impacts dependent symbols across Monorepo B & C.
-- **Synergy**: Integrated with `cartographer` (Mermaid maps) & `smith` (AST refactoring).
-- **Framework**: Applied via the `spark` 4-Lens Lateral Ideation Engine.
-
 
 ## When to use
 
-- Primary domain workflow execution as specified in frontmatter description.
-
+- One workspace/monorepo checked out locally, and you want to know which packages depend on a
+  given package, based on `package.json` declarations.
 
 ## When NOT to use
 
-- Tasks outside declared skill scope or handled by specialized sibling skills.
+- **Repos not all cloned into one tree** — nothing fetches or resolves separate repos.
+- **Symbol- or import-level impact analysis** → use `trellis` on the specific repo.
